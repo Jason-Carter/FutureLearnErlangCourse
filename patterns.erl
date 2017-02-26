@@ -1,5 +1,5 @@
 -module(patterns).
--export([is_zero/1, xOr/2, xOr2/2, xOr3/2, xOr4/2, xOr5/2]).
+-export([is_zero/1, xOr/2, xOr2/2, xOr3/2, xOr4/2, xOr5/2, xOr6/2]).
 -export([maxThree/3, howManyEqual/3]).
 
 %
@@ -31,6 +31,11 @@ xOr3(X,Y) -> X =/= Y.
 xOr4(X,Y) -> X == not Y.
 
 xOr5(X,Y) -> X and not Y.
+
+% An example from the next section (1.16)
+xOr6(true,X) -> not(X);
+xOr6(false,X) -> X.
+
 
 % (I prefer the pattern matching version in xOr2)
 

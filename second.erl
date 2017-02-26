@@ -5,6 +5,8 @@ hypotenuse(Side1, Side2) ->
     math:sqrt(first:square(Side1) + first:square(Side2)).
 
 perim(Side1, Side2) ->
+    % Could also have done this in one line (but liked breaking it over two):
+    % Side1 + Side2 + hypotenuse(Side1, Side2).
     Side3 = hypotenuse(Side1, Side2),
     Side1 + Side2 + Side3.
 
