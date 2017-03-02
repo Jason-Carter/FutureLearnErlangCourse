@@ -11,14 +11,14 @@ productd([]) -> 1; % The multiplying by 0 gives 0, so need to return 1
 productd([X|Xs]) -> X * productd(Xs).
 
 % Tail Recursion
+productt([]) -> 1;
 productt(Xs) -> productt(Xs, 1).
 
 % Why???
 % ** exception error: an error occurred when evaluating an arithmetic expression
 %     in function  listfuncs:productt/2 (listfuncs.erl, line 14)
 productt([], Acc) -> Acc;
-productt([X|Xs], Acc) -> productt([Xs], X * Acc).
-%productt([X|Xs], Acc) when X == 0 -> productt([Xs], Acc).
+productt([X|Xs], Acc) -> productt(Xs, X*Acc).
 
 %
 % Combining list elements: the maximum of a list
