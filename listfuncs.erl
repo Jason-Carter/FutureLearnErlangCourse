@@ -14,9 +14,6 @@ productd([X|Xs]) -> X * productd(Xs).
 productt([]) -> 1;
 productt(Xs) -> productt(Xs, 1).
 
-% Why???
-% ** exception error: an error occurred when evaluating an arithmetic expression
-%     in function  listfuncs:productt/2 (listfuncs.erl, line 14)
 productt([], Acc) -> Acc;
 productt([X|Xs], Acc) -> productt(Xs, X*Acc).
 
@@ -25,13 +22,13 @@ productt([X|Xs], Acc) -> productt(Xs, X*Acc).
 %
 
 % Direct recursion
-listmaxd([]) -> 0;
-listmaxd([X]) -> X;
+%listmaxd([]) -> erlang:error(badarg);
+listmaxd([X]) when X =/= [] -> X;
 listmaxd([X|Xs]) -> (max(X, listmaxd(Xs))).
 
 % Tail recursion
-listmaxt([]) -> 0;
-listmaxt(Xs) -> listmaxt(Xs, 0).
+%listmaxt([]) -> erlang:error(badarg);
+listmaxt(Xs) when Xs =/= [] -> listmaxt(Xs, 0).
 
 listmaxt([X], Acc) -> max(Acc, X);
 listmaxt([X|Xs], Acc) -> listmaxt(Xs, max(Acc, X)).
