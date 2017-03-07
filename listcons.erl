@@ -1,7 +1,7 @@
 -module(listcons).
 -export([double/1]).
 -export([doubleelems/1]).
--export([even/1,evensonly/1]).
+-export([even/1,evens/1]).
 
 % Erlang Course activity 2.9
 
@@ -18,10 +18,10 @@ doubleelems([X|Xs]) -> [ double(X) | doubleelems(Xs) ].
 
 even(X) -> (X rem 2) == 0.
 
-evensonly([])       -> [];
-evensonly([X|Xs])   -> 
+evens([])       -> [];
+evens([X|Xs])   -> 
     case even(X) of
-        true -> [ X | evensonly(Xs)];
-        _ -> evensonly(Xs)
+        true -> [ X | evens(Xs)];
+        _ -> evens(Xs)
     end.
 
