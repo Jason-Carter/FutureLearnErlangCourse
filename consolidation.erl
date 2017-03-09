@@ -11,9 +11,7 @@
 join([],[]) -> [];
 join(X, []) -> X;
 join([], Y) -> Y;
-join(X, Y)  -> join(X, Y, []).
-
-join(X, Y, ReverseX) -> join([], shunt(shunt(X, ReverseX), Y)).
+join(X, Y) -> shunt(shunt(X, []), Y).
 
 shunt([],Ys)     -> Ys;
 shunt([X|Xs],Ys) -> shunt(Xs,[X|Ys]).
