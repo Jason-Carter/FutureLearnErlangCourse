@@ -39,13 +39,55 @@ show_file_contents([L|Ls]) ->
 % Indexing a file
 %  Given a text file, return a list of words and the ranges of lines on which it occurs
 
--spec wordindex(string()) -> {string(), [{integer(),integer()}]}.
+%-spec wordindex(string()) -> {string(), [{integer(),integer()}]}.
 
-wordindex([]) -> {[], {0, 0}};
-wordindex(Name) ->
-    LineList = get_file_contents(Name),
-    WordList = lines_to_words(LineList),
-    {WordList, {0, 0}}.
+%wordindex([]) -> {[], {0, 0}};
+wordindex(Name) -> concat(get_file_contents(Name)).
+    % WordList = concat(get_file_contents(Name)),
+    % {WordList, {0, 0}}.
+
+% string:tokens(WordList, " .,")
+
+%
+% Helper functions created for this exercise
+%
 
 
 
+%
+% Helper functions from earlier modules
+%
+
+nopunct([]) -> [];
+nopunct([X|Xs]) ->
+    case member(X,".,\ ;:\t\n\'\"") of
+	    true  -> nopunct(Xs);
+	    false -> [ X | nopunct(Xs) ]
+    end.
+
+% Testing membership
+-spec member(T, [T]) -> boolean().
+
+member(_, []) -> false;
+member(Elem, [Elem | _ListT]) -> true;
+member(Elem, [_ListH | ListT]) -> member(Elem, ListT).
+
+
+% My implementation of lists:concat from an earlier module
+-spec concat([T]) -> [T].
+concat(List) -> concat(List, []).
+
+concat([], Result)  -> Result;
+concat([ListH | ListT], Result) -> concat(ListT, join(Result, ListH)).
+
+% My implementation of ++ called join/2 from and ealier module
+% (which uses shunt also from previous modules)
+
+-spec join([T], [T]) -> [T].
+join([],[]) -> [];
+join(X, []) -> X;
+join([], Y) -> Y;
+join(X, Y) -> shunt(shunt(X, []), Y).
+
+shunt([],Ys)     -> Ys;
+shunt([X|Xs],Ys) -> shunt(Xs,[X|Ys]).
