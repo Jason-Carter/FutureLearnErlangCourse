@@ -1,6 +1,7 @@
 -module(index).
 -export([get_file_contents/1,show_file_contents/1]).
 -export([wordindex/1]).
+-export([processfilecontents/1]).
 
 % Used to read a file into a list of lines.
 % Example files available in:
@@ -44,30 +45,40 @@ show_file_contents([L|Ls]) ->
 %-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
 
 %wordindex([]) -> {[], {0, 0}};
-wordindex(Name) -> processlines(get_file_contents(Name), []).
+wordindex(Name) -> processfilecontents(get_file_contents(Name)).
     % WordList = concat(get_file_contents(Name)),
     % {WordList, {0, 0}}.
 
 %
 % Helper functions created for this exercise
-%]
+%
+processfilecontents(Lines) -> processlines(Lines, [], 1).
 
-processlines([], Result) -> Result;
-processlines([LineH | LineT], Result) -> processlines(LineT,  join(Result, processwords(LineH, []))).
+% Converts each line at a time to desired format
+processlines([], Result, _LineNum) -> Result;
+processlines([LineH | LineT], Result, LineNum) -> processlines(LineT,  join(Result, processwords(LineH, [], LineNum)), LineNum + 1).
 
-processwords([], Result) -> Result;
-processwords(Line, Result) -> chars2words(Line, [], Result).
+% Given a line, convert characters to a 'word'
+processwords([], Result, _) -> Result;
+processwords(Line, Result, LineNum) -> chars2words(Line, [], Result, LineNum).
 
-
- %[ {LineH, [{0}]} | processwords(LineT, Result)].
-
-chars2words([], [], Result) -> Result;
-chars2words([], WordBuffer, Result) -> [{WordBuffer, [{0,0}]} | Result];
-chars2words([ StringH | StringT ], WordBuffer, Result) ->
+% Identify a 'word' from the stream of characters
+chars2words([], [], Result, _LineNum) -> Result;
+chars2words([], WordBuffer, Result, LineNum) -> [ addelement(WordBuffer, Result, LineNum) | Result ]; 
+chars2words([ StringH | StringT ], WordBuffer, Result, LineNum) ->
     case member(StringH, " .,\n") of
-        true  -> chars2words(StringT, [], [ {WordBuffer, [{0,0}]} | Result ]);
-        false -> chars2words(StringT, join(WordBuffer, [StringH]), Result)
+        true  -> chars2words(StringT, [], [ addelement(WordBuffer, Result, LineNum) | Result ], LineNum);
+        false -> chars2words(StringT, join(WordBuffer, [StringH]), Result, LineNum)
     end.
+% TODO test this with the following:
+%   index:processfilecontents(["jason was here jason", "jason here"]).
+addelement(Word, [], LineNum) -> {Word, [{LineNum,LineNum}]};
+addelement(Word, [ListH | ListT], LineNum) ->
+    case Word == ListH of % TODO: Match  "jason" == {"jason",[{1,1}]}
+        true ->  [];
+        false -> addelement(Word, ListT, LineNum)
+    end.
+
 
 
 %
