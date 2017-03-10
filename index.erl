@@ -34,36 +34,45 @@ show_file_contents([L|Ls]) ->
     io:format("~s~n",[L]),
     show_file_contents(Ls);
  show_file_contents([]) ->
-    ok.    
-     
+    ok.
+
+%
 % Indexing a file
 %  Given a text file, return a list of words and the ranges of lines on which it occurs
+%
 
-%-spec wordindex(string()) -> {string(), [{integer(),integer()}]}.
+%-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
 
 %wordindex([]) -> {[], {0, 0}};
-wordindex(Name) -> concat(get_file_contents(Name)).
+wordindex(Name) -> processlines(get_file_contents(Name), []).
     % WordList = concat(get_file_contents(Name)),
     % {WordList, {0, 0}}.
 
-% string:tokens(WordList, " .,")
-
 %
 % Helper functions created for this exercise
-%
+%]
 
+processlines([], Result) -> Result;
+processlines([LineH | LineT], Result) -> processlines(LineT,  join(Result, processwords(LineH, []))).
+
+processwords([], Result) -> Result;
+processwords(Line, Result) -> chars2words(Line, [], Result).
+
+
+ %[ {LineH, [{0}]} | processwords(LineT, Result)].
+
+chars2words([], [], Result) -> Result;
+chars2words([], WordBuffer, Result) -> [{WordBuffer, [{0,0}]} | Result];
+chars2words([ StringH | StringT ], WordBuffer, Result) ->
+    case member(StringH, " .,\n") of
+        true  -> chars2words(StringT, [], [ {WordBuffer, [{0,0}]} | Result ]);
+        false -> chars2words(StringT, join(WordBuffer, [StringH]), Result)
+    end.
 
 
 %
 % Helper functions from earlier modules
 %
-
-nopunct([]) -> [];
-nopunct([X|Xs]) ->
-    case member(X,".,\ ;:\t\n\'\"") of
-	    true  -> nopunct(Xs);
-	    false -> [ X | nopunct(Xs) ]
-    end.
 
 % Testing membership
 -spec member(T, [T]) -> boolean().
