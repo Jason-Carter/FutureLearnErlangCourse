@@ -98,7 +98,10 @@ linenums2ranges([]) -> [];
 linenums2ranges(NumberedWords) -> linenums2ranges(NumberedWords, []).
 
 linenums2ranges([], RangedWords) -> RangedWords;
-linenums2ranges([ {FirstNumWord, LineNum} | RemainingNumWords], RangedWords) -> linenums2ranges(RemainingNumWords, join(RangedWords, [{FirstNumWord, [{LineNum, LineNum}]}] )).
+linenums2ranges([ {FirstNumWord, LineNum} | RemainingNumWords], RangedWords) -> linenums2ranges(RemainingNumWords, updateranges({FirstNumWord, [{LineNum, LineNum}]}, RangedWords)).
+
+%TODO: Pattern matching and membership checking
+updateranges({FirstNumWord, [{LineNum, LineNum}]}, RangedWords) -> join(RangedWords, [{FirstNumWord, [{LineNum, LineNum}]}] ).
 
 % addword(Word, [], LineNum) -> {Word, [{LineNum,LineNum}]};
 % addword(Word, [ {Word, _} | _ListTail], _LineNum) -> [];
