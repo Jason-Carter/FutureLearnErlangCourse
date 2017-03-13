@@ -1,7 +1,6 @@
 -module(index).
 -export([get_file_contents/1,show_file_contents/1]).
 -export([wordindex/1, test/1]).
--export([flattenfilecontents/1]).
 
 %
 % Indexing a file
@@ -11,67 +10,99 @@
 %-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
 
 %wordindex([]) -> {[], {0, 0}};
-wordindex(Name) -> flattenfilecontents(get_file_contents(Name)).
+wordindex(Name) -> lines2words(addlinenums(get_file_contents(Name))).
     % WordList = concat(get_file_contents(Name)),
     % {WordList, {0, 0}}.
 
-% index:test(["jason is very busy jason", "jason busy", [], "busy busy"]).
-%test(List) -> flattenfilecontents(List).
-test(Lines) -> addlinenums(Lines).
+% index:test(["jason is very busy jason", "jason busy", [], "busy busy", "very"]).
+test(Lines) -> linenums2ranges(lines2words(addlinenums(Lines))).
 
 % Add line numbers to each entry - have to do this first before we break the lines up so we know what the line numbers are
 %
-% ["jason is very busy jason", "jason busy", [], "busy busy"]
+% ["jason is very busy jason", "jason busy", [], "busy busy", "very"]
 %
 % becomes
 %
-% [{"busy busy",4},
+% [{"jason is very busy jason",1},
 %  {"jason busy",2},
-%  {"jason is very busy jason",1}]
+%  {"busy busy",4},
+%  {"very",5}]
 
-addlinenums(Lines) -> lines2words(addlinenums(Lines, [], 1)).
+addlinenums(Lines) -> addlinenums(Lines, [], 1).
 
 addlinenums([], NumberedLines, _LineNum) -> NumberedLines;
 addlinenums([ [] | RemainingLines], NumberedLines, LineNum) -> addlinenums(RemainingLines, NumberedLines, LineNum + 1); % Removes blank paragraph lines
-addlinenums([FirstLine | RemainingLines], NumberedLines, LineNum) -> addlinenums(RemainingLines, [ {FirstLine,LineNum} | NumberedLines ], LineNum + 1).
+addlinenums([FirstLine | RemainingLines], NumberedLines, LineNum) -> addlinenums(RemainingLines, join(NumberedLines, [{FirstLine,LineNum}]), LineNum + 1).
 
-% Convert the line array into seperate words, retaining line number
+% Convert the line array into seperate words, retaining line numbers
+%
+% [{"jason is very busy jason",1},
+%  {"jason busy",2},
+%  {"busy busy",4},
+%  {"very",5}]
+
+%
+% becomes
+%
+% [{"jason",1},
+%  {"is",1},
+%  {"very",1},
+%  {"busy",1},
+%  {"jason",1},
+%  {"jason",2},
+%  {"busy",2},
+%  {"busy",4},
+%  {"busy",4},
+%  {"very",5}]
+
 lines2words(Lines) -> lines2words(Lines, []).
 
 lines2words([], NumberedWords) -> NumberedWords;
-lines2words( [ {LineOfWords, LineNum} | RemainingWords] , NumberedWords) -> lines2words(RemainingWords, [ chars2words(LineOfWords, LineNum) | NumberedWords ]).
+lines2words( [ {LineOfChars, LineNum} | RemainingWords] , NumberedWords) -> lines2words(RemainingWords, join(NumberedWords, numberthewords(chars2words(LineOfChars), LineNum))).
 
+numberthewords([], _) -> [];
+numberthewords(Words, LineNum) -> numberthewords(Words, [], LineNum).
 
-
-
-flattenfilecontents(Lines) -> processlines(Lines, [], 1).
-
-% Converts each line at a time to desired format
-processlines([], Result, _LineNum) -> Result;
-processlines([LineH | LineT], Result, LineNum) -> processlines(LineT,  join(Result, processwords(LineH, [], LineNum)), LineNum + 1).
-
-% Given a line, convert characters to a 'word'
-processwords([], Result, _) -> Result;
-processwords(Line, Result, LineNum) -> chars2words(Line, [], Result, LineNum).
+numberthewords([], NumberedWords, _) -> NumberedWords;
+numberthewords([FirstWord | RemainingWords ], NumberedWords, LineNum) -> numberthewords(RemainingWords, [ {FirstWord, LineNum} | NumberedWords], LineNum).
 
 % Identify a 'word' from the stream of characters
-chars2words (LineOfWords, LineNum) -> chars2words(LineOfWords, LineNum, [], []).
+chars2words (LineOfWords) -> chars2words(LineOfWords, [], []).
 
-chars2words([], _LineNum, [], ArrayOfWords) -> ArrayOfWords;
-chars2words([], LineNum, WordBuffer, ArrayOfWords) -> [ addword(WordBuffer, ArrayOfWords, LineNum) | ArrayOfWords ]; 
-chars2words([ StringH | StringT ], LineNum, WordBuffer, ArrayOfWords) ->
-    case member(StringH, " .,\n") of
-        true  -> chars2words(StringT, [], [ addword(WordBuffer, ArrayOfWords, LineNum) | ArrayOfWords ], LineNum);
-        false -> chars2words(StringT, join(WordBuffer, [StringH]), ArrayOfWords, LineNum)
+chars2words([], [], ArrayOfWords) -> ArrayOfWords;
+chars2words([], WordBuffer, ArrayOfWords) -> join([WordBuffer], ArrayOfWords); 
+chars2words([ FirstChar | RemainingChars ], WordBuffer, ArrayOfWords) ->
+    case member(FirstChar, " .,\n") of
+        true  -> chars2words(RemainingChars, [], join([WordBuffer], ArrayOfWords));
+        false -> chars2words(RemainingChars, join(WordBuffer, [FirstChar]), ArrayOfWords)
     end.
 
-% Add an element if it's not already present
+% Convert the lines numbers to ranges
+%
+% [{"jason",1},
+%  {"is",1},
+%  {"very",1},
+%  {"busy",1},
+%  {"jason",1},
+%  {"jason",2},
+%  {"busy",2},
+%  {"busy",4},
+%  {"busy",4},
+%  {"very",5}]
+%
+% becomes
+%
+% ...
+
+linenums2ranges([]) -> [];
+linenums2ranges(NumberedWords) -> linenums2ranges(NumberedWords, []).
+
+linenums2ranges([], RangedWords) -> RangedWords;
+linenums2ranges([ {FirstNumWord, LineNum} | RemainingNumWords], RangedWords) -> linenums2ranges(RemainingNumWords, join(RangedWords, [{FirstNumWord, [{LineNum, LineNum}]}] )).
+
 % addword(Word, [], LineNum) -> {Word, [{LineNum,LineNum}]};
 % addword(Word, [ {Word, _} | _ListTail], _LineNum) -> [];
 % addword(Word, [_ | ListT], LineNum) -> addword(Word, ListT, LineNum).
-addword(Word, [], LineNum) -> {Word, LineNum};
-addword(Word, [_ | ListT], LineNum) -> addword(Word, ListT, LineNum).
-
 
 %
 % Helper functions from earlier modules
