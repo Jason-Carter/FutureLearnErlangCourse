@@ -15,7 +15,7 @@ wordindex(Name) -> lines2words(addlinenums(get_file_contents(Name))).
     % {WordList, {0, 0}}.
 
 % index:test(["jason is very busy jason", "jason busy", [], "busy busy", "very"]).
-test(Lines) -> linenums2ranges(lines2words(addlinenums(Lines))).
+test(Lines) -> lines2words(addlinenums(Lines)).
 
 % Add line numbers to each entry - have to do this first before we break the lines up so we know what the line numbers are
 %
@@ -73,11 +73,18 @@ chars2words([], [], ArrayOfWords) -> ArrayOfWords;
 chars2words([], WordBuffer, ArrayOfWords) -> join([WordBuffer], ArrayOfWords); 
 chars2words([ FirstChar | RemainingChars ], WordBuffer, ArrayOfWords) ->
     case member(FirstChar, " .,\n") of
-        true  -> chars2words(RemainingChars, [], join([WordBuffer], ArrayOfWords));
+        true  -> chars2words(RemainingChars, [], addwordnodupe(WordBuffer, ArrayOfWords));
         false -> chars2words(RemainingChars, join(WordBuffer, [FirstChar]), ArrayOfWords)
     end.
 
-% Convert the lines numbers to ranges
+% TODO: Why is this not removing existing members?
+addwordnodupe(Word, WordArray) ->
+    case member(Word, WordArray) of
+        true -> WordArray;
+        false -> join([Word], WordArray)
+    end.
+
+% Roll up the lines numbers so each word is associated with a list of line numbers
 %
 % [{"jason",1},
 %  {"is",1},
@@ -94,18 +101,26 @@ chars2words([ FirstChar | RemainingChars ], WordBuffer, ArrayOfWords) ->
 %
 % ...
 
-linenums2ranges([]) -> [];
-linenums2ranges(NumberedWords) -> linenums2ranges(NumberedWords, []).
+indexwords([]) -> [];
+indexwords(NumberedWords) -> indexwords(NumberedWords, []).
 
-linenums2ranges([], RangedWords) -> RangedWords;
-linenums2ranges([ {FirstNumWord, LineNum} | RemainingNumWords], RangedWords) -> linenums2ranges(RemainingNumWords, updateranges({FirstNumWord, [{LineNum, LineNum}]}, RangedWords)).
+indexwords([], IndexedWords) -> IndexedWords;
+indexwords([ {FirstNumWord, LineNum} | RemainingNumWords], IndexedWords) -> indexwords(RemainingNumWords, updatewordindex({FirstNumWord, LineNum}, IndexedWords)).
 
-%TODO: Pattern matching and membership checking
-updateranges({FirstNumWord, [{LineNum, LineNum}]}, RangedWords) -> join(RangedWords, [{FirstNumWord, [{LineNum, LineNum}]}] ).
 
-% addword(Word, [], LineNum) -> {Word, [{LineNum,LineNum}]};
-% addword(Word, [ {Word, _} | _ListTail], _LineNum) -> [];
-% addword(Word, [_ | ListT], LineNum) -> addword(Word, ListT, LineNum).
+updatewordindex({FirstNumWord, LineNum}, []) -> [{FirstNumWord, [LineNum]}];
+updatewordindex({FirstNumWord, LineNum}, IndexedWords) -> updatewordindex({FirstNumWord, LineNum}, IndexedWords, []).
+
+updatewordindex({FirstNumWord, LineNum}, [], IndexedWordsResult) ->
+    % Nothing matched, so add to results as-is because it's the first entry for that word
+    join(IndexedWordsResult, [{FirstNumWord, [LineNum]}]);
+updatewordindex({MatchedWord, LineNum}, [ {MatchedWord, LineNums} | RemainingIndexedWords ], IndexedWordsResult) ->
+    % Matches existing entry, so update that entry and add to IndexedWordsResult
+    updatewordindex({MatchedWord, LineNum}, RemainingIndexedWords, join(IndexedWordsResult, [{MatchedWord, join(LineNums, [LineNum] )}]));
+updatewordindex({FirstNumWord, LineNum}, [ {UnMatchedWord, LineNums} | RemainingIndexedWords ], IndexedWordsResult) ->
+    % Nothing matched, add as-is to IndexedWordsResult and try the remaining words
+    updatewordindex({FirstNumWord, LineNum}, RemainingIndexedWords, join(IndexedWordsResult, [{UnMatchedWord, LineNums}])).
+
 
 %
 % Helper functions from earlier modules
