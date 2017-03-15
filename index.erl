@@ -10,7 +10,7 @@
 %-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
 
 %wordindex([]) -> {[], {0, 0}};
-wordindex(Name) -> lines2words(addlinenums(get_file_contents(Name))).
+wordindex(Name) -> indexwords(lines2words(addlinenums(get_file_contents(Name)))).
     % WordList = concat(get_file_contents(Name)),
     % {WordList, {0, 0}}.
 
@@ -77,8 +77,12 @@ chars2words([], [], ArrayOfWords) -> ArrayOfWords;
 chars2words([], WordBuffer, ArrayOfWords) -> join([WordBuffer], ArrayOfWords); 
 chars2words([ FirstChar | RemainingChars ], WordBuffer, ArrayOfWords) ->
     case member(FirstChar, " .,\n") of
-        %true  -> chars2words(RemainingChars, [], addwordnodupe(WordBuffer, ArrayOfWords));
-        true  -> chars2words(RemainingChars, [],  join([WordBuffer], ArrayOfWords));
+        true  ->
+            % Don't add the WordBuffer to the array if it's empty, for example after a comma, a space could add [] as wordbuffer to ArrayOfWords
+            case WordBuffer == [] of
+                true -> chars2words(RemainingChars, [],  ArrayOfWords);
+                false -> chars2words(RemainingChars, [],  join([WordBuffer], ArrayOfWords))
+            end;
         false -> chars2words(RemainingChars, join(WordBuffer, [FirstChar]), ArrayOfWords)
     end.
 
