@@ -7,12 +7,10 @@
 %  Given a text file, return a list of words and the ranges of lines on which it occurs
 %
 
-%-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
+-spec wordindex(string()) -> [{string(), [{integer(),integer()}]}].
 
-%wordindex([]) -> {[], {0, 0}};
+wordindex([]) -> {[], {0, 0}};
 wordindex(Name) -> rangeindex(indexwords(lines2words(addlinenums(get_file_contents(Name))))).
-    % WordList = concat(get_file_contents(Name)),
-    % {WordList, {0, 0}}.
 
 % index:test(["jason is very busy jason", "jason busy", [], "busy busy", "very"]).
 test(Lines) -> rangeindex(indexwords(lines2words(addlinenums(Lines)))).
