@@ -15,7 +15,7 @@ wordindex(Name) -> lines2words(addlinenums(get_file_contents(Name))).
     % {WordList, {0, 0}}.
 
 % index:test(["jason is very busy jason", "jason busy", [], "busy busy", "very"]).
-test(Lines) -> lines2words(addlinenums(Lines)).
+test(Lines) -> indexwords(lines2words(addlinenums(Lines))).
 
 % Add line numbers to each entry - have to do this first before we break the lines up so we know what the line numbers are
 %
@@ -30,9 +30,13 @@ test(Lines) -> lines2words(addlinenums(Lines)).
 
 addlinenums(Lines) -> addlinenums(Lines, [], 1).
 
-addlinenums([], NumberedLines, _LineNum) -> NumberedLines;
-addlinenums([ [] | RemainingLines], NumberedLines, LineNum) -> addlinenums(RemainingLines, NumberedLines, LineNum + 1); % Removes blank paragraph lines
-addlinenums([FirstLine | RemainingLines], NumberedLines, LineNum) -> addlinenums(RemainingLines, join(NumberedLines, [{FirstLine,LineNum}]), LineNum + 1).
+addlinenums([], NumberedLines, _LineNum) ->
+    NumberedLines;
+addlinenums([ [] | RemainingLines], NumberedLines, LineNum) ->
+    % Removes blank paragraph lines
+    addlinenums(RemainingLines, NumberedLines, LineNum + 1);
+addlinenums([FirstLine | RemainingLines], NumberedLines, LineNum) ->
+    addlinenums(RemainingLines, join(NumberedLines, [{FirstLine,LineNum}]), LineNum + 1).
 
 % Convert the line array into seperate words, retaining line numbers
 %
@@ -73,15 +77,9 @@ chars2words([], [], ArrayOfWords) -> ArrayOfWords;
 chars2words([], WordBuffer, ArrayOfWords) -> join([WordBuffer], ArrayOfWords); 
 chars2words([ FirstChar | RemainingChars ], WordBuffer, ArrayOfWords) ->
     case member(FirstChar, " .,\n") of
-        true  -> chars2words(RemainingChars, [], addwordnodupe(WordBuffer, ArrayOfWords));
+        %true  -> chars2words(RemainingChars, [], addwordnodupe(WordBuffer, ArrayOfWords));
+        true  -> chars2words(RemainingChars, [],  join([WordBuffer], ArrayOfWords));
         false -> chars2words(RemainingChars, join(WordBuffer, [FirstChar]), ArrayOfWords)
-    end.
-
-% TODO: Why is this not removing existing members?
-addwordnodupe(Word, WordArray) ->
-    case member(Word, WordArray) of
-        true -> WordArray;
-        false -> join([Word], WordArray)
     end.
 
 % Roll up the lines numbers so each word is associated with a list of line numbers
@@ -99,24 +97,30 @@ addwordnodupe(Word, WordArray) ->
 %
 % becomes
 %
-% ...
+% [{"jason",[1,1,2]},
+%  {"is",[1]},
+%  {"very",[1,5]},
+%  {"busy",[1,2,4,4]}]
 
 indexwords([]) -> [];
 indexwords(NumberedWords) -> indexwords(NumberedWords, []).
 
 indexwords([], IndexedWords) -> IndexedWords;
-indexwords([ {FirstNumWord, LineNum} | RemainingNumWords], IndexedWords) -> indexwords(RemainingNumWords, updatewordindex({FirstNumWord, LineNum}, IndexedWords)).
+indexwords([ {FirstNumWord, LineNum} | RemainingNumWords], IndexedWords) ->
+    indexwords(RemainingNumWords, updatewordindex({FirstNumWord, LineNum}, IndexedWords)).
 
 
-updatewordindex({FirstNumWord, LineNum}, []) -> [{FirstNumWord, [LineNum]}];
+updatewordindex({FirstNumWord, LineNum}, []) -> [{FirstNumWord, [LineNum]}]; % First entry, so just add it and convert the line number to a list
 updatewordindex({FirstNumWord, LineNum}, IndexedWords) -> updatewordindex({FirstNumWord, LineNum}, IndexedWords, []).
 
 updatewordindex({FirstNumWord, LineNum}, [], IndexedWordsResult) ->
-    % Nothing matched, so add to results as-is because it's the first entry for that word
+    % Finished recursing through the IndexedWords and no existing entry found, so add to results
     join(IndexedWordsResult, [{FirstNumWord, [LineNum]}]);
+
 updatewordindex({MatchedWord, LineNum}, [ {MatchedWord, LineNums} | RemainingIndexedWords ], IndexedWordsResult) ->
     % Matches existing entry, so update that entry and add to IndexedWordsResult
-    updatewordindex({MatchedWord, LineNum}, RemainingIndexedWords, join(IndexedWordsResult, [{MatchedWord, join(LineNums, [LineNum] )}]));
+    join(join(IndexedWordsResult, [{MatchedWord, join(LineNums, [LineNum] )}]),RemainingIndexedWords);
+
 updatewordindex({FirstNumWord, LineNum}, [ {UnMatchedWord, LineNums} | RemainingIndexedWords ], IndexedWordsResult) ->
     % Nothing matched, add as-is to IndexedWordsResult and try the remaining words
     updatewordindex({FirstNumWord, LineNum}, RemainingIndexedWords, join(IndexedWordsResult, [{UnMatchedWord, LineNums}])).
