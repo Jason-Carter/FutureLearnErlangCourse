@@ -95,26 +95,26 @@ beats(rock)     -> scissors;
 beats(paper)    -> rock;
 beats(scissors) -> paper.
 
+loses(rock)     -> paper;
+loses(paper)    -> scissors;
+loses(scissors) -> rock.
+
 %
 % strategies.
 %
-echo([]) ->
-     paper;
-echo([Last|_]) ->
-    Last.
+echo([])       -> paper;
+echo([Last|_]) -> Last.
 
-rock(_) ->
-    rock.
+rock(_) -> rock.
 
 
 
 % FOR YOU TO DEFINE
 % REPLACE THE dummy DEFINITIONS
 
-no_repeat([]) ->
-    dummy;
-no_repeat([X|_]) ->
-    dummy.
+no_repeat([]) -> paper;
+no_repeat([Previous|_]) -> beats(Previous).
+
 
 const(Play) ->
     dummy.
@@ -122,5 +122,4 @@ const(Play) ->
 cycle(Xs) ->
     dummy.
 
-rand(_) ->
-    dummy.
+rand(_) -> enum(rand:uniform(3) - 1).
