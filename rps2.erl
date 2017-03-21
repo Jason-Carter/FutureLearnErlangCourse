@@ -115,11 +115,19 @@ rock(_) -> rock.
 no_repeat([]) -> paper;
 no_repeat([Previous|_]) -> beats(Previous).
 
-
+% Not quite sure what this one is for...
 const(Play) ->
     dummy.
 
-cycle(Xs) ->
-    dummy.
+% I peeked at other solutions for this one
+cycle(Xs) -> enum(length(Xs) rem 3).
 
 rand(_) -> enum(rand:uniform(3) - 1).
+
+% Todo: needs some thought
+%leastfrequent([]) -> rand([]);
+%leastfrequent(Xs) -> 
+
+% mostfrequent([]) -> rand([]);
+% mostfrequent(Xs) ->
+
