@@ -107,27 +107,56 @@ echo([Last|_]) -> Last.
 
 rock(_) -> rock.
 
-
-
-% FOR YOU TO DEFINE
-% REPLACE THE dummy DEFINITIONS
-
 no_repeat([]) -> paper;
 no_repeat([Previous|_]) -> beats(Previous).
 
-% Not quite sure what this one is for...
-const(Play) ->
-    dummy.
+% Not quite sure what this one is for... so assuming 'constant'
+% which just returns one particular value.
+const(_Play) -> paper.
 
-% I peeked at other solutions for this one
+% I peeked at other solutions for this one as couldn't figure out
+% how to cycle through the values, and I liked this solution
 cycle(Xs) -> enum(length(Xs) rem 3).
 
+% Returns a random rock paper or scissors
 rand(_) -> enum(rand:uniform(3) - 1).
 
-% Todo: needs some thought
-%leastfrequent([]) -> rand([]);
-%leastfrequent(Xs) -> 
+% Choose the least frequent play, assuming that in the long run your opponent will
+% play each choice equally
+leastfrequent([])    -> rand([]);
+leastfrequent(Plays) -> mincount(addcounts(Plays)).
 
-% mostfrequent([]) -> rand([]);
-% mostfrequent(Xs) ->
+% Choose the most frequent play, assuming that in the long run your opponent is going to
+% play that choice more often than the others.
+mostfrequent([])    -> rand([]);
+mostfrequent(Plays) -> maxcount(addcounts(Plays)).
 
+
+mincount([{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}]) ->
+    % Returns the play with the least number of uses
+    matchcount(min(min(CntRock, CntPaper), min(CntPaper, CntScissors)), CntRock, CntPaper, CntScissors).
+
+maxcount([{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}]) ->
+    % Returns the play with the most number of uses
+    matchcount(max(max(CntRock, CntPaper), max(CntPaper, CntScissors)), CntRock, CntPaper, CntScissors).
+
+% Doesnt' matter if the count matches >1, the first hit will always be used
+matchcount(MatchCount, MatchCount, _PaperCount, _ScissorsCount) -> rock;
+matchcount(MatchCount, _RockCount, MatchCount, _ScissorsCount)  -> paper;
+matchcount(MatchCount, _Rockcount, _PaperCount, MatchCount)     -> scissors.
+
+addcounts(Plays) -> addcounts(Plays, [{rock, 0},{paper, 0},{scissors, 0}]).
+
+addcounts([], Counts) -> Counts;
+addcounts([rock | Plays] , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}])     -> addcounts(Plays , [{rock, CntRock + 1},{paper, CntPaper},{scissors, CntScissors}]);
+addcounts([paper | Plays] , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}])    -> addcounts(Plays , [{rock, CntRock},{paper, CntPaper + 1},{scissors, CntScissors}]);
+addcounts([scissors | Plays] , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}]) -> addcounts(Plays , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors + 1}]).
+
+
+% Todo: Take a list of strategies and each play chooses a random one to apply.
+
+% Todo: Take a list of strategies and each play chooses from the list the
+%       strategy which gets the best result when played against the list
+%       of plays made so far
+%
+% Will have to play each strategy, store the results, then return the best
