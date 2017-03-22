@@ -153,7 +153,9 @@ addcounts([paper | Plays] , [{rock, CntRock},{paper, CntPaper},{scissors, CntSci
 addcounts([scissors | Plays] , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors}]) -> addcounts(Plays , [{rock, CntRock},{paper, CntPaper},{scissors, CntScissors + 1}]).
 
 
-% Todo: Take a list of strategies and each play chooses a random one to apply.
+% Take a list of strategies and each play chooses a random one to apply.
+randomstrategy([]) -> fun rand/1;
+randomstrategy(Strategies) -> lists:nth(rand:uniform(length(Strategies)), Strategies).
 
 % Todo: Take a list of strategies and each play chooses from the list the
 %       strategy which gets the best result when played against the list
